@@ -1,0 +1,25 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# environment
+.env
+.env.production
+.env.local
+
+# OS
+.DS_Store
+
+# cloudflare
+.wrangler/

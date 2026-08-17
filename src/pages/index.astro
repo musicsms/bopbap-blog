@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const allTags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
+
+function formatDate(d: Date) {
+  return d.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+---
+
+<BaseLayout
+  title="bopbap.co — security research & writeups"
+  description="Security research blog: writeup pentest, 0-day analysis, Web3 CTF (Damn Vulnerable DeFi) và ghi chú kỹ thuật."
+>
+  <section class="hero">
+    <h1>Security Research <span class="accent">&amp;</span> Writeups</h1>
+    <p class="hero-sub">
+      Pentest, 0-day hunting, smart-contract audit &amp; CTF writeups — viết bằng tiếng Việt, kèm code và bằng chứng.
+    </p>
+    <p class="muted small">
+      <span class="hero-tag">#Web2</span> <span class="hero-tag">#Web3</span> <span class="hero-tag">#SmartContract</span> <span class="hero-tag">#CTF</span>
+    </p>
+  </section>
+
+  <section class="post-list">
+    <h2 class="section-title">Bài viết</h2>
+    {
+      posts.map((post) => (
+        <a class="post-card" href={`/posts/${post.id}`}>
+          <div class="post-card-body">
+            <h3>{post.data.title}</h3>
+            <p class="post-card-desc">{post.data.description}</p>
+            <p class="post-card-meta muted">
+              <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
+              {post.data.difficulty && <span class="badge">Độ khó: {post.data.difficulty}</span>}
+            </p>
+          </div>
+        </a>
+      ))
+    }
+  </section>
+
+  <section class="tags-section">
+    <h2 class="section-title">Thẻ</h2>
+    <div class="tags">
+      {allTags.map((t) => <a class="tag" href={`/tags/${t}`}>#{t}</a>)}
+    </div>
+  </section>
+</BaseLayout>
