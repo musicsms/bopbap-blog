@@ -1,9 +1,9 @@
 ---
 title: "[DVD-07] Puppet: thao túng giá oracle Uniswap V1 để vay toàn bộ pool với gần 0 collateral"
-description: "Mục tiêu là rút sạch 100.000 DVT khỏi PuppetPool trong một giao dịch. Lỗ hổng nằm ở _computeOraclePrice() dùng trực tiếp số dư spot của pair Uniswap V1 làm giá — chỉ cần dump token vào pair là giá sụp, collateral yêu cầu gần về 0."
+description: "Mục tiêu là rút toàn bộ 100.000 DVT khỏi PuppetPool trong một giao dịch. Lỗ hổng nằm ở _computeOraclePrice() dùng trực tiếp số dư spot của pair Uniswap V1 làm giá — chỉ cần swap lượng lớn token vào pair là giá suy giảm mạnh, collateral yêu cầu giảm gần về 0."
 pubDate: 2026-08-23
 tags: ["web3", "ctf", "smart-contract", "damn-vulnerable-defi", "oracle-manipulation"]
-draft: true
+draft: false
 challenge: "damn-vulnerable-defi"
 difficulty: "easy"
 series: "damn-vulnerable-defi"
@@ -11,7 +11,7 @@ series: "damn-vulnerable-defi"
 
 ## Tóm tắt
 
-Puppet là bài mở đầu cho chuỗi oracle của Damn Vulnerable DeFi: một lending pool dùng **spot price** đọc trực tiếp từ cặp thanh khoản Uniswap V1 làm oracle. Pair chỉ có 10 DVT / 10 ETH, trong khi player nắm 1.000 DVT — đủ sức đẩy giá xuống gần 0 chỉ bằng một lần swap. Sau khi giá sụp, khoản collateral cần nộp để vay 100.000 DVT chỉ còn ~19,7 ETH, thấp hơn số dư 25 ETH của player. Toàn bộ kịch bản gói trong **một giao dịch** bằng một contract tấn công triển khai ngay trong constructor.
+Puppet là bài mở đầu cho chuỗi oracle của Damn Vulnerable DeFi: một lending pool dùng **spot price** đọc trực tiếp từ cặp thanh khoản Uniswap V1 làm oracle. Pair chỉ có 10 DVT / 10 ETH, trong khi player nắm 1.000 DVT — đủ sức đẩy giá xuống gần 0 chỉ bằng một lần swap. Sau khi giá suy giảm mạnh, khoản collateral cần nộp để vay 100.000 DVT chỉ còn ~19,7 ETH, thấp hơn số dư 25 ETH của player. Toàn bộ kịch bản gói trong **một giao dịch** bằng một contract tấn công triển khai ngay trong constructor.
 
 ## Bối cảnh & Mục tiêu
 
@@ -77,7 +77,7 @@ contract PuppetAttacker {
 }
 ```
 
-1. **Dump 1.000 DVT vào pair** qua `tokenToEthSwapInput`. Theo công thức Uniswap V1 (fee 0,3%), token reserve tăng từ 10 lên ~1007, ETH reserve co từ 10 về ~0,099 ETH (bảo toàn tích số). Giá mới ≈ 9,86e-5 ETH/DVT — giảm ~4 bậc độ lớn.
+1. **Bán (swap) 1.000 DVT vào pair** qua `tokenToEthSwapInput`. Theo công thức Uniswap V1 (fee 0,3%), token reserve tăng từ 10 lên ~1007, ETH reserve co từ 10 về ~0,099 ETH (bảo toàn tích số). Giá mới ≈ 9,86e-5 ETH/DVT — giảm ~4 bậc độ lớn.
 2. **Tính lại collateral**: vay 100.000 DVT cần `100.000 × 9,86e-5 × 2 ≈ 19,7 ETH`. Player gửi 25 ETH, pool hoàn lại phần thừa.
 3. **Pool chuyển 100.000 DVT thẳng tới recovery.**
 

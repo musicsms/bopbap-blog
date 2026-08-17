@@ -11,7 +11,7 @@ series: "damn-vulnerable-defi"
 
 ## Tóm tắt
 
-Challenge yêu cầu rút sạch cả pool lẫn contract receiver chỉ trong **tối đa 2 giao dịch**. Pool cho flash loan với phí cố định 1 WETH nhưng không kiểm tra ai là người khởi tạo khoản vay — player lợi dụng để "bắt" receiver (nạn nhân) trả phí 10 lần liên tiếp, rút cạn 10 WETH của receiver. Sau đó player dùng chính cơ chế trusted forwarder của pool, nhét địa chỉ deployer vào cuối calldata, để `_msgSender()` trả về deployer và rút toàn bộ 1010 WETH còn lại trong pool về tài khoản recovery.
+Challenge yêu cầu rút toàn bộ WETH từ cả pool lẫn contract receiver chỉ trong **tối đa 2 giao dịch**. Pool hỗ trợ flash loan với phí cố định 1 WETH nhưng không xác thực người khởi tạo khoản vay — player lợi dụng kẽ hở này để ép receiver contract thanh toán khoản phí 10 lần liên tiếp, làm cạn kiệt 10 WETH của receiver. Sau đó, player kết hợp cơ chế trusted forwarder của pool với việc đính kèm địa chỉ deployer vào cuối calldata, khiến `_msgSender()` nhận diện sai người gửi là deployer và rút toàn bộ 1010 WETH còn lại trong pool về tài khoản recovery.
 
 ## Bối cảnh & Mục tiêu
 
@@ -94,7 +94,7 @@ Suite result: ok. 2 passed; 0 failed; 0 skipped
 
 ## Bài học & Cách phòng tránh
 
-- **Flash loan phải xác thực người khởi tạo.** `flashLoan()` nên chỉ chấp nhận receiver do chính người dùng chỉ định (initiator phải là `msg.sender`) hoặc yêu cầu receiver chủ động gọi vay, tránh kiểu tấn công "forced flash loan" bắt victim trả phí.
+- **Flash loan phải xác thực người khởi tạo.** `flashLoan()` nên chỉ chấp nhận receiver do chính người dùng chỉ định (initiator phải là `msg.sender`) hoặc yêu cầu receiver chủ động gọi vay, tránh kiểu tấn công "forced flash loan" buộc victim gánh khoản phí.
 - **Không tin 20 byte cuối calldata.** Cơ chế `_msgSender()` kiểu này chỉ an toàn nếu mọi đường gọi đều đi qua forwarder và forwarder là người duy nhất nối `from` đã xác thực vào cuối calldata. Khi có `delegatecall`/`multicall` chèn giữa, chuỗi calldata bị phá vỡ. Nên lưu người gửi vào storage qua `_msgSender()` một lần ở điểm vào duy nhất, hoặc dùng cơ chế context (ví dụ `_msgData` của OpenZeppelin) nhất quán.
 - **Kiểm tra phí và số dư trước khi thực hiện effect:** receiver không nên approve vô điều kiện `amount + fee` khi amount do bên ngoài quyết định.
 

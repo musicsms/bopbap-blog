@@ -11,11 +11,11 @@ series: "damn-vulnerable-defi"
 
 ## Tóm tắt
 
-Side Entrance là bài học về sai lầm trong kiểm tra hoàn trả flash loan: pool chỉ so sánh **tổng số dư ETH** trước và sau khoản vay, không kiểm tra xem tiền có thực sự quay về từ borrower hay không. Kẻ tấn công vay hết 1000 ETH của pool, rồi ngay trong callback dùng chính số ETH đó gọi `deposit()` để nạp vào "tài khoản" của mình trong pool. Số dư pool khôi phục nguyên vẹn nên điều kiện hoàn trả được thỏa mãn, nhưng attacker giờ sở hữu một khoản credit 1000 ETH và rút sạch qua `withdraw()`.
+Side Entrance là bài học về sai lầm trong cơ chế kiểm tra hoàn trả flash loan: pool chỉ so sánh **tổng số dư ETH** trước và sau khoản vay, thay vì xác thực nguồn gốc khoản hoàn trả từ chính người vay (borrower). Kẻ tấn công vay toàn bộ 1000 ETH của pool, sau đó trong hàm callback đã thực hiện nạp (deposit) số ETH vừa vay vào tài khoản của chính mình trong pool. Vì tổng số dư của pool được khôi phục, điều kiện hoàn trả được thỏa mãn, nhưng attacker đã tạo lập một khoản credit trị giá 1000 ETH và có thể rút toàn bộ số tiền này thông qua hàm `withdraw()`.
 
 ## Bối cảnh & Mục tiêu
 
-**SideEntranceLenderPool** (`src/side-entrance/SideEntranceLenderPool.sol`) vừa là flash lender vừa là một "ngân hàng" cho phép deposit/withdraw ETH:
+**SideEntranceLenderPool** (`src/side-entrance/SideEntranceLenderPool.sol`) vừa là flash lender vừa là một giao thức cho phép deposit/withdraw ETH:
 
 ```solidity
 function deposit() external payable {
@@ -47,18 +47,18 @@ Trạng thái ban đầu: pool giữ 1000 ETH (deposit của deployer); player c
 
 ## Phân tích lỗ hổng
 
-`flashLoan()` ghi nhận `balanceBefore = address(this).balance`, chuyển `amount` tới `msg.sender`, gọi callback `execute()`, rồi kiểm tra `address(this).balance >= balanceBefore`.
+`flashLoan()` ghi nhận `balanceBefore = address(this).balance`, chuyển `amount` tới `msg.sender`, gọi callback `execute()`, sau đó kiểm tra điều kiện `address(this).balance >= balanceBefore`.
 
-Vấn đề: check này chỉ xác nhận **pool có đủ tiền trở lại**, không xác nhận **khoản vay được hoàn trả**. `deposit()` là một hàm public bất kỳ ai cũng gọi được — nó không phân biệt tiền đến từ borrower đang trả nợ hay từ bất kỳ nguồn nào khác. Trong callback, attacker gọi `deposit{value: msg.value}()` với chính số ETH vừa vay:
+Vấn đề nằm ở chỗ: cơ chế này chỉ xác nhận **pool có đủ thanh khoản**, không xác nhận **khoản vay đã được hoàn trả bởi borrower**. Hàm `deposit()` là một hàm public mà bất kỳ ai cũng có thể truy cập — nó không phân biệt được tiền nạp vào là để trả nợ flash loan hay là hoạt động deposit thông thường. Trong hàm callback, attacker thực hiện gọi `deposit{value: msg.value}()` với chính số ETH vừa vay:
 
-- ETH chảy về pool → `address(this).balance` trở lại bằng `balanceBefore` → check pass, không revert.
-- Nhưng `balances[attacker]` giờ tăng thêm 1000 ETH — đây là một khoản **credit hợp lệ** mà attacker có thể rút bất cứ lúc nào qua `withdraw()`.
+- Dòng tiền chuyển về pool → `address(this).balance` trở lại bằng `balanceBefore` → điều kiện kiểm tra được thỏa mãn, không xảy ra revert.
+- Tuy nhiên, `balances[attacker]` tăng thêm 1000 ETH — đây là một khoản **credit hợp lệ** mà attacker hoàn toàn có quyền rút thông qua hàm `withdraw()`.
 
-Bản chất: khoản nợ đã được "trả" nhưng đồng thời biến thành tài sản của chính người vay. Pool tưởng mình được hoàn tiền, thực ra tiền vẫn nằm trong quyền kiểm soát của attacker. Đây là lý do tại sao việc kiểm tra hoàn trả phải gắn với danh tính borrower, không gắn với tổng số dư pool.
+Bản chất: khoản nợ đã được "trả" về mặt kế toán pool, nhưng đồng thời nó chuyển hóa thành tài sản của chính người vay trong sổ cái của pool. Pool ghi nhận số dư được khôi phục, nhưng quyền kiểm soát thực tế vẫn thuộc về attacker. Đây là lý do tại sao việc kiểm tra hoàn trả phải gắn liền với danh tính của borrower thay vì chỉ so sánh tổng số dư của contract.
 
 ## Khai thác
 
-Contract attacker triển khai interface callback `execute()`:
+Contract tấn công triển khai interface callback `execute()`:
 
 ```solidity
 contract SideEntranceAttacker {

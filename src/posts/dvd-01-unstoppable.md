@@ -48,7 +48,7 @@ Với solmate ERC4626, `convertToShares(totalSupply)` = `totalSupply.mulDivDown(
 - `totalAssets()` = 1.000.000e18 + 1
 - `convertToShares(totalSupply)` = (1.000.000e18)² / (1.000.000e18 + 1) = 1.000.000e18 − 1 (làm tròn xuống)
 
-Hai giá trị lệch nhau → `revert InvalidBalance()` ngay trước khi chuyển token. Mọi flash loan từ đó đều chết. Monitor thấy thất bại, tưởng vault hỏng, liền pause vault và trả ownership cho deployer — không hề biết "sự cố" chỉ là một khoản donate 1 wei của kẻ tấn công.
+Hai giá trị lệch nhau → `revert InvalidBalance()` ngay trước khi chuyển token. Mọi flash loan từ đó đều bị revert. Monitor nhận thấy thất bại và giả định vault gặp sự cố, liền pause vault và trả ownership cho deployer — không hề biết "sự cố" chỉ là một khoản donate 1 wei của kẻ tấn công.
 
 Đây là một biến thể của lớp lỗ hổng **donation/inflation attack** trên ERC4626: invariant được kiểm tra bằng giá trị balance có thể bị thao túng từ bên ngoài, thay vì dùng sổ kế toán do chính contract quản lý.
 

@@ -1,6 +1,6 @@
 ---
 title: "[DVD-03] Truster: arbitrary call khiến pool tự approve token cho attacker"
-description: "TrusterLenderPool cho phép borrower chỉ định target và calldata tùy ý trong flashLoan, rồi pool tự thực thi lời gọi đó trong context của chính mình. Attacker chỉ cần lừa pool gọi token.approve(attacker, toàn bộ số dư) trong một khoản vay amount = 0, sau đó rút sạch pool bằng transferFrom — tất cả trong một giao dịch duy nhất."
+description: "TrusterLenderPool cho phép borrower chỉ định target và calldata tùy ý trong flashLoan, rồi pool tự thực thi lời gọi đó trong context của chính mình. Attacker chỉ cần khiến pool gọi token.approve(attacker, toàn bộ số dư) trong một khoản vay amount = 0, sau đó rút sạch pool bằng transferFrom — tất cả trong một giao dịch duy nhất."
 pubDate: 2026-08-19
 tags: ["web3", "ctf", "smart-contract", "damn-vulnerable-defi", "arbitrary-external-call", "approve"]
 draft: false
@@ -44,7 +44,7 @@ Trạng thái ban đầu (`test/truster/Truster.t.sol`): pool giữ 1.000.000 DV
 
 Có hai vấn đề cộng hưởng trong `flashLoan()`:
 
-1. **`target.functionCall(data)` không giới hạn.** Người gọi khoản vay tự chọn `target` và `data`. Lời gọi được pool thực thi trực tiếp, nên mọi hàm được gọi đều chạy với `msg.sender == address(pool)`. Pool có thể bị lừa thực hiện bất kỳ hành động nào mà chính nó được phép làm với token của nó — ở đây là `approve`.
+1. **`target.functionCall(data)` không giới hạn.** Người gọi khoản vay tự chọn `target` và `data`. Lời gọi được pool thực thi trực tiếp, nên mọi hàm được gọi đều chạy với `msg.sender == address(pool)`. Pool có thể bị tác động để thực hiện bất kỳ hành động nào mà chính nó được phép làm với token của nó — ở đây là `approve`.
 
 2. **Điều kiện hoàn trả chỉ so sánh số dư token của pool.** `balanceBefore` được đo **trước** lời gọi tùy ý. Nếu đặt `amount = 0`, không có token nào bị chuyển ra, và lời gọi tùy ý không làm giảm `token.balanceOf(pool)` (approve không động vào số dư), nên check `RepayFailed` luôn pass.
 

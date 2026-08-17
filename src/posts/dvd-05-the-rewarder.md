@@ -50,7 +50,7 @@ for (uint256 i = 0; i < inputClaims.length; i++) {
 
 Trạng thái ban đầu (`test/the-rewarder/TheRewarder.t.sol`): hai distribution đang hoạt động — DVT (tổng 10 ether, 1000 beneficiary) và WETH (tổng 1 ether). Alice (index 2) đã claim phần của mình. Player là beneficiary hợp lệ index 188 với quyền claim `11524763827831882` DVT và `1171088749244340` WETH.
 
-Điều kiện thắng (`_isSolved()`): distributor chỉ còn lại "bụi" (`< 1e16` DVT, `< 1e15` WETH); toàn bộ phần còn lại nằm ở recovery.
+Điều kiện thắng (`_isSolved()`): distributor chỉ còn lại số dư không đáng kể (dust balance `< 1e16` DVT, `< 1e15` WETH); toàn bộ phần còn lại nằm ở recovery.
 
 ## Phân tích lỗ hổng
 
@@ -87,7 +87,7 @@ distributor.claimRewards({inputClaims: claims, inputTokens: tokensToClaim});
 
 - 867 claim DVT liên tiếp: chỉ entry cuối của chuỗi DVT (điểm chuyển sang WETH) chạy `_setClaimed` — set bit 0, trừ `remaining` đúng một lần theo tổng. Nhưng 867 lệnh transfer đều thực thi.
 - 853 claim WETH liên tiếp: tương tự, entry cuối cùng của mảng chạy `_setClaimed` lần hai.
-- Tổng cộng player nhận `867 × 11524763827831882` DVT và `853 × 1171088749244340` WETH, đủ để `remaining` chỉ còn lại phần dư nhỏ hơn một lần claim — nằm dưới ngưỡng "bụi" của `_isSolved()`. Cuối cùng player chuyển toàn bộ số token nhận được về `recovery`.
+- Tổng cộng player nhận `867 × 11524763827831882` DVT và `853 × 1171088749244340` WETH, đủ để `remaining` chỉ còn lại phần dư nhỏ hơn một lần claim — nằm dưới ngưỡng dust balance của `_isSolved()`. Cuối cùng player chuyển toàn bộ số token nhận được về `recovery`.
 
 ## Kết quả
 

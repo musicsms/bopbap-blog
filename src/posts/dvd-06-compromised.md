@@ -1,6 +1,6 @@
 ---
 title: "[DVD-06] Compromised: hai private key của oracle source bị lộ, thao túng median price để mua rẻ bán đắt"
-description: "TrustfulOracle lấy median giá từ 3 trusted source; hai trong số đó bị lộ private key qua một chuỗi hex → ASCII → base64. Với 2/3 số phiếu, attacker hoàn toàn kiểm soát median: hạ giá DVNFT về 0 để mua NFT gần như miễn phí, đẩy giá lên bằng đúng số dư exchange để bán lại rút sạch 999 ETH, rồi khôi phục giá ban đầu."
+description: "TrustfulOracle lấy median giá từ 3 trusted source; hai trong số đó bị lộ private key qua một chuỗi hex → ASCII → base64. Với 2/3 số phiếu, attacker hoàn toàn kiểm soát median: hạ giá DVNFT về 0 để mua NFT với chi phí tối thiểu, đẩy giá lên bằng đúng số dư exchange để bán lại rút toàn bộ 999 ETH, rồi khôi phục giá ban đầu."
 pubDate: 2026-08-22
 tags: ["web3", "ctf", "smart-contract", "damn-vulnerable-defi", "oracle-manipulation", "private-key-leak"]
 draft: false
@@ -11,7 +11,7 @@ series: "damn-vulnerable-defi"
 
 ## Tóm tắt
 
-Compromised xoay quanh một oracle giá tập trung: **TrustfulOracle** tính median giá từ đúng 3 trusted source. Nhiệm vụ phụ của challenge là phát hiện hai private key bị rò rỉ trong tài liệu (hex string → ASCII → base64 → private key), khớp với 2 trong 3 source. Vì median của 3 giá trị chỉ cần 2 phiếu để quyết định, attacker thao túng giá DVNFT theo ý muốn: hạ về 0 để mua NFT của exchange với giá gần như không, đẩy lên đúng bằng số dư exchange để bán lại rút sạch 999 ETH, rồi đưa giá về mức cũ — mọi assert của challenge vẫn khớp.
+Compromised xoay quanh một oracle giá tập trung: **TrustfulOracle** tính median giá từ đúng 3 trusted source. Nhiệm vụ phụ của challenge là phát hiện hai private key bị rò rỉ trong tài liệu (hex string → ASCII → base64 → private key), khớp với 2 trong 3 source. Vì median của 3 giá trị chỉ cần 2 phiếu để quyết định, attacker thao túng giá DVNFT theo ý muốn: hạ về 0 để mua NFT của exchange với giá gần như không, đẩy lên đúng bằng số dư exchange để bán lại rút toàn bộ 999 ETH, rồi đưa giá về mức cũ — mọi assert của challenge vẫn khớp.
 
 ## Bối cảnh & Mục tiêu
 
@@ -57,7 +57,7 @@ Kịch bản 3 bước, tất cả đều là giao dịch hợp lệ:
 3. **Bán và chốt lời:** player approve NFT cho exchange, gọi `sellOne(id)` — exchange đốt NFT và trả 999 ETH. Player chuyển toàn bộ về `recovery`. Median cuối cùng vẫn là 999 ether nên assert giá không đổi vẫn pass.
 
 ```solidity
-// 2/3 trusted source đủ để quyết định median -> hạ giá về 0 để mua gần như free.
+// 2/3 trusted source đủ để quyết định median -> hạ giá về 0 để mua với chi phí tối thiểu.
 vm.prank(sources[0]); oracle.postPrice("DVNFT", 0);
 vm.prank(sources[1]); oracle.postPrice("DVNFT", 0);
 
@@ -65,7 +65,7 @@ vm.prank(player);
 uint256 id = exchange.buyOne{value: 1}();
 
 // Đặt giá = balance hiện tại của exchange (999 ether) -> vừa khớp
-// INITIAL_NFT_PRICE cho assertion cuối, vừa đủ để sellOne rút sạch.
+// INITIAL_NFT_PRICE cho assertion cuối, vừa đủ để sellOne rút toàn bộ.
 uint256 price = address(exchange).balance;
 vm.prank(sources[0]); oracle.postPrice("DVNFT", price);
 vm.prank(sources[1]); oracle.postPrice("DVNFT", price);
