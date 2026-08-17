@@ -14,7 +14,7 @@ interface Props {
 const { title, description, pubDate, updatedDate, tags = [], difficulty, challenge } = Astro.props;
 
 function formatDate(d: Date) {
-  return d.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
 }
 ---
 
@@ -24,9 +24,9 @@ function formatDate(d: Date) {
       <p class="post-meta">
         <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
         {updatedDate && (
-          <span class="muted"> · cập nhật {formatDate(updatedDate)}</span>
+          <span class="muted"> · updated {formatDate(updatedDate)}</span>
         )}
-        {difficulty && <span class="badge">Độ khó: {difficulty}</span>}
+        {difficulty && <span class="badge">Difficulty: {difficulty}</span>}
         {challenge && <span class="badge badge-alt">{challenge}</span>}
       </p>
       <h1>{title}</h1>
@@ -43,7 +43,7 @@ function formatDate(d: Date) {
     <footer class="post-footer">
       <p class="muted">— musicsms</p>
       <p class="muted">
-        Có sai sót hoặc muốn thảo luận? Mở issue trên{' '}
+        Found a mistake or want to discuss? Open an issue on{' '}
         <a href="https://github.com/musicsms/bopbap-blog" target="_blank" rel="noopener">GitHub</a>.
       </p>
     </footer>

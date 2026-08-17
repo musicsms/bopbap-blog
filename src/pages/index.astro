@@ -9,18 +9,18 @@ const posts = (await getCollection('posts'))
 const allTags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
 
 function formatDate(d: Date) {
-  return d.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
 }
 ---
 
 <BaseLayout
   title="bopbap.co — security research & writeups"
-  description="Security research blog: writeup pentest, 0-day analysis, Web3 CTF (Damn Vulnerable DeFi) và ghi chú kỹ thuật."
+  description="Security research blog: pentest writeups, 0-day analysis, Web3 CTF (Damn Vulnerable DeFi), and technical notes."
 >
   <section class="hero">
     <h1>Security Research <span class="accent">&amp;</span> Writeups</h1>
     <p class="hero-sub">
-      Pentest, 0-day hunting, smart-contract audit &amp; CTF writeups — viết bằng tiếng Việt, kèm code và bằng chứng.
+      Pentest, 0-day hunting, smart-contract audits &amp; CTF writeups — code snippets &amp; proofs of concept.
     </p>
     <p class="muted small">
       <span class="hero-tag">#Web2</span> <span class="hero-tag">#Web3</span> <span class="hero-tag">#SmartContract</span> <span class="hero-tag">#CTF</span>
@@ -28,7 +28,7 @@ function formatDate(d: Date) {
   </section>
 
   <section class="post-list">
-    <h2 class="section-title">Bài viết</h2>
+    <h2 class="section-title">Posts</h2>
     {
       posts.map((post) => (
         <a class="post-card" href={`/posts/${post.id}`}>
@@ -37,7 +37,7 @@ function formatDate(d: Date) {
             <p class="post-card-desc">{post.data.description}</p>
             <p class="post-card-meta muted">
               <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate)}</time>
-              {post.data.difficulty && <span class="badge">Độ khó: {post.data.difficulty}</span>}
+              {post.data.difficulty && <span class="badge">Difficulty: {post.data.difficulty}</span>}
             </p>
           </div>
         </a>
@@ -46,7 +46,7 @@ function formatDate(d: Date) {
   </section>
 
   <section class="tags-section">
-    <h2 class="section-title">Thẻ</h2>
+    <h2 class="section-title">Tags</h2>
     <div class="tags">
       {allTags.map((t) => <a class="tag" href={`/tags/${t}`}>#{t}</a>)}
     </div>
